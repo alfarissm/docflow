@@ -4,6 +4,7 @@ import React, { useRef, useState, useEffect } from "react";
 import Webcam from "react-webcam";
 import { PDFDocument, rgb, StandardFonts } from "pdf-lib";
 import { Camera, Download, Trash2, CloudUpload, RotateCcw, FileText, Grip, Sun, Moon } from "lucide-react";
+import { blob } from "stream/consumers";
 
 export default function Scanner() {
   const webcamRef = useRef<Webcam>(null);
@@ -94,9 +95,9 @@ export default function Scanner() {
     try {
       setIsProcessing(true);
       const pdfBytes = await buildPDF();
-      const blob = new Blob([new Uint8Array(pdfBytes)], {
-  type: "application/pdf",
-})
+      const blob = new Blob([Uint8Array.from(pdfBytes)], {
+        type: "application/pdf",
+      });
       const url = URL.createObjectURL(blob);
       const link = document.createElement("a");
       link.href = url;
