@@ -1,10 +1,9 @@
 "use client";
 
-import React, { useRef, useState, useEffect } from "react";
+import React, { useRef, useState } from "react";
 import Webcam from "react-webcam";
 import { PDFDocument, rgb, StandardFonts } from "pdf-lib";
-import { Camera, Download, Trash2, CloudUpload, RotateCcw, FileText, Grip, Sun, Moon } from "lucide-react";
-import { blob } from "stream/consumers";
+import { Camera, Download, Trash2, CloudUpload, RotateCcw, FileText, Grip, Sun, Moon, SwitchCamera } from "lucide-react";
 
 export default function Scanner() {
   const webcamRef = useRef<Webcam>(null);
@@ -14,9 +13,16 @@ export default function Scanner() {
   // State untuk Dark Mode
   const [isDarkMode, setIsDarkMode] = useState(false);
 
+  // State untuk Kamera (Default: Kamera Belakang / environment)
+  const [facingMode, setFacingMode] = useState<"environment" | "user">("environment");
+
   // Drag and Drop Refs
   const dragItem = useRef<number | null>(null);
   const dragOverItem = useRef<number | null>(null);
+
+  const toggleCamera = () => {
+    setFacingMode((prevMode) => (prevMode === "user" ? "environment" : "user"));
+  };
 
   const capture = () => {
     const screenshot = webcamRef.current?.getScreenshot();
@@ -33,7 +39,6 @@ export default function Scanner() {
     }
   };
 
-  // Drag and Drop Logic
   const handleSort = () => {
     if (
       dragItem.current !== null &&
@@ -148,9 +153,7 @@ export default function Scanner() {
   };
 
   return (
-    // Wrapper utama yang mengontrol class "dark"
     <div className={`${isDarkMode ? "dark" : ""}`}>
-      {/* Background UI Utama */}
       <div className="min-h-screen transition-colors duration-300 bg-white dark:bg-slate-950">
         <div className="max-w-4xl mx-auto p-4 md:p-8 flex flex-col gap-8 font-sans text-slate-800 dark:text-slate-100 transition-colors duration-300">
           
@@ -176,11 +179,21 @@ export default function Scanner() {
               audio={false}
               ref={webcamRef}
               screenshotFormat="image/jpeg"
+              videoConstraints={{ facingMode: facingMode }} // <-- Tambahkan ini untuk kontrol kamera
               className="w-full h-auto object-cover opacity-95 transition-opacity duration-300 group-hover:opacity-100"
             />
             
+            {/* Tombol Ganti Kamera */}
+            <button
+              onClick={toggleCamera}
+              className="absolute top-4 right-4 p-2 bg-black/50 text-white rounded-full hover:bg-black/70 backdrop-blur-sm transition-all shadow-md z-10"
+              title="Tukar Kamera Depan/Belakang"
+            >
+              <SwitchCamera size={24} />
+            </button>
+            
             {/* Shutter Button */}
-            <div className="absolute bottom-6 left-0 right-0 flex justify-center">
+            <div className="absolute bottom-6 left-0 right-0 flex justify-center z-10">
               <button
                 onClick={capture}
                 className="flex items-center justify-center w-16 h-16 bg-white dark:bg-slate-200 rounded-full shadow-lg border-4 border-slate-200 dark:border-slate-400 hover:scale-105 active:scale-95 transition-all"
@@ -194,7 +207,6 @@ export default function Scanner() {
           {/* Action Controls & Gallery */}
           {images.length > 0 && (
             <div className="space-y-6">
-              {/* Toolbar */}
               <div className="flex flex-col md:flex-row items-center justify-between bg-white dark:bg-slate-900 p-4 rounded-xl shadow-sm border border-slate-200 dark:border-slate-800 gap-4 transition-colors duration-300">
                 <div className="flex items-center gap-2 text-slate-600 dark:text-slate-300 font-medium">
                   <span className="bg-blue-100 dark:bg-blue-900/40 text-blue-700 dark:text-blue-400 py-1 px-3 rounded-full text-sm transition-colors">
@@ -234,7 +246,6 @@ export default function Scanner() {
                 💡 Tips: Seret dan lepas (drag & drop) gambar untuk mengubah urutan halaman.
               </p>
 
-              {/* Image Grid with Drag and Drop */}
               <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-4">
                 {images.map((img, index) => (
                   <div
@@ -251,18 +262,12 @@ export default function Scanner() {
                       alt={`Halaman ${index + 1}`}
                       className="w-full h-full object-cover pointer-events-none opacity-90 dark:opacity-80 group-hover:opacity-100 transition-opacity"
                     />
-                    
-                    {/* Drag Indicator (Icon) */}
                     <div className="absolute top-2 left-2 bg-black/40 text-white p-1 rounded opacity-0 group-hover:opacity-100 transition-opacity backdrop-blur-sm">
                       <Grip size={14} />
                     </div>
-                    
-                    {/* Page Number Badge */}
                     <div className="absolute bottom-2 left-2 bg-black/60 dark:bg-black/80 text-white text-xs px-2 py-1 rounded backdrop-blur-sm font-medium">
                       Hal {index + 1}
                     </div>
-
-                    {/* Delete Button (Appears on Hover) */}
                     <button
                       onClick={() => deleteImage(index)}
                       className="absolute top-2 right-2 bg-red-500/90 text-white p-1.5 rounded-full opacity-0 group-hover:opacity-100 transition-opacity hover:bg-red-600 shadow-sm"
