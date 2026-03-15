@@ -3,20 +3,16 @@
 import React, { useRef, useState } from "react";
 import Webcam from "react-webcam";
 import { PDFDocument, rgb, StandardFonts } from "pdf-lib";
-import { Camera, Download, Trash2, CloudUpload, RotateCcw, FileText, Grip, Sun, Moon, SwitchCamera } from "lucide-react";
+import { Camera, Download, Trash2, CloudUpload, RotateCcw, FileText, Grip, Sun, Moon, SwitchCamera, ChevronLeft, ChevronRight } from "lucide-react";
 
 export default function Scanner() {
   const webcamRef = useRef<Webcam>(null);
   const [images, setImages] = useState<string[]>([]);
   const [isProcessing, setIsProcessing] = useState(false);
-  
-  // State untuk Dark Mode
   const [isDarkMode, setIsDarkMode] = useState(false);
-
-  // State untuk Kamera (Default: Kamera Belakang / environment)
   const [facingMode, setFacingMode] = useState<"environment" | "user">("environment");
 
-  // Drag and Drop Refs
+  // Drag and Drop Refs (Untuk PC/Laptop)
   const dragItem = useRef<number | null>(null);
   const dragOverItem = useRef<number | null>(null);
 
@@ -39,6 +35,21 @@ export default function Scanner() {
     }
   };
 
+  // Fungsi Pindah Posisi untuk HP (Tombol Panah)
+  const moveImage = (index: number, direction: "left" | "right") => {
+    const newImages = [...images];
+    if (direction === "left" && index > 0) {
+      // Tukar dengan gambar sebelumnya
+      [newImages[index - 1], newImages[index]] = [newImages[index], newImages[index - 1]];
+      setImages(newImages);
+    } else if (direction === "right" && index < images.length - 1) {
+      // Tukar dengan gambar setelahnya
+      [newImages[index + 1], newImages[index]] = [newImages[index], newImages[index + 1]];
+      setImages(newImages);
+    }
+  };
+
+  // Drag and Drop Logic (Untuk PC/Laptop)
   const handleSort = () => {
     if (
       dragItem.current !== null &&
@@ -50,7 +61,6 @@ export default function Scanner() {
       _images.splice(dragOverItem.current, 0, draggedItemContent);
       setImages(_images);
     }
-    
     dragItem.current = null;
     dragOverItem.current = null;
   };
@@ -154,7 +164,7 @@ export default function Scanner() {
 
   return (
     <div className={`${isDarkMode ? "dark" : ""}`}>
-      <div className="min-h-screen transition-colors duration-300 bg-white dark:bg-slate-950">
+      <div className="min-h-screen transition-colors duration-300 bg-white dark:bg-slate-950 pb-20">
         <div className="max-w-4xl mx-auto p-4 md:p-8 flex flex-col gap-8 font-sans text-slate-800 dark:text-slate-100 transition-colors duration-300">
           
           {/* Header & Theme Toggle */}
@@ -179,11 +189,10 @@ export default function Scanner() {
               audio={false}
               ref={webcamRef}
               screenshotFormat="image/jpeg"
-              videoConstraints={{ facingMode: facingMode }} // <-- Tambahkan ini untuk kontrol kamera
+              videoConstraints={{ facingMode: facingMode }}
               className="w-full h-auto object-cover opacity-95 transition-opacity duration-300 group-hover:opacity-100"
             />
             
-            {/* Tombol Ganti Kamera */}
             <button
               onClick={toggleCamera}
               className="absolute top-4 right-4 p-2 bg-black/50 text-white rounded-full hover:bg-black/70 backdrop-blur-sm transition-all shadow-md z-10"
@@ -192,7 +201,6 @@ export default function Scanner() {
               <SwitchCamera size={24} />
             </button>
             
-            {/* Shutter Button */}
             <div className="absolute bottom-6 left-0 right-0 flex justify-center z-10">
               <button
                 onClick={capture}
@@ -229,7 +237,7 @@ export default function Scanner() {
                     disabled={isProcessing}
                     className="flex items-center gap-2 bg-slate-800 dark:bg-slate-700 text-white hover:bg-slate-700 dark:hover:bg-slate-600 px-4 py-2 rounded-lg transition-colors text-sm font-medium shadow-sm disabled:opacity-50"
                   >
-                    <Download size={16} /> {isProcessing ? "Memproses..." : "Download PDF"}
+                    <Download size={16} /> {isProcessing ? "Memproses..." : "Download"}
                   </button>
 
                   <button
@@ -243,7 +251,7 @@ export default function Scanner() {
               </div>
 
               <p className="text-xs text-slate-400 dark:text-slate-500 text-center -mb-2">
-                💡 Tips: Seret dan lepas (drag & drop) gambar untuk mengubah urutan halaman.
+                💡 Tips: Gunakan panah ⬅️ ➡️ di bawah gambar untuk mengatur urutan di HP.
               </p>
 
               <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-4">
@@ -255,26 +263,51 @@ export default function Scanner() {
                     onDragEnter={() => (dragOverItem.current = index)}
                     onDragEnd={handleSort}
                     onDragOver={(e) => e.preventDefault()}
-                    className="relative group rounded-xl overflow-hidden shadow-sm border border-slate-200 dark:border-slate-700 aspect-[3/4] bg-slate-50 dark:bg-slate-800 cursor-grab active:cursor-grabbing hover:border-blue-400 dark:hover:border-blue-500 transition-colors"
+                    className="relative group rounded-xl overflow-hidden shadow-sm border border-slate-200 dark:border-slate-700 aspect-[3/4] bg-slate-50 dark:bg-slate-800 cursor-grab active:cursor-grabbing hover:border-blue-400 dark:hover:border-blue-500 transition-colors flex flex-col"
                   >
-                    <img
-                      src={img}
-                      alt={`Halaman ${index + 1}`}
-                      className="w-full h-full object-cover pointer-events-none opacity-90 dark:opacity-80 group-hover:opacity-100 transition-opacity"
-                    />
-                    <div className="absolute top-2 left-2 bg-black/40 text-white p-1 rounded opacity-0 group-hover:opacity-100 transition-opacity backdrop-blur-sm">
-                      <Grip size={14} />
+                    {/* Gambar Utama */}
+                    <div className="flex-1 relative overflow-hidden">
+                      <img
+                        src={img}
+                        alt={`Halaman ${index + 1}`}
+                        className="w-full h-full object-cover pointer-events-none opacity-90 dark:opacity-80 group-hover:opacity-100 transition-opacity"
+                      />
+                      <div className="absolute top-2 left-2 bg-black/40 text-white p-1 rounded opacity-0 group-hover:opacity-100 transition-opacity backdrop-blur-sm hidden md:block">
+                        <Grip size={14} />
+                      </div>
+                      <div className="absolute bottom-2 left-2 bg-black/60 dark:bg-black/80 text-white text-xs px-2 py-1 rounded backdrop-blur-sm font-medium">
+                        Hal {index + 1}
+                      </div>
+                      <button
+                        onClick={() => deleteImage(index)}
+                        className="absolute top-2 right-2 bg-red-500/90 text-white p-1.5 rounded-full hover:bg-red-600 shadow-sm transition-all md:opacity-0 md:group-hover:opacity-100"
+                        title="Hapus gambar ini"
+                      >
+                        <Trash2 size={14} />
+                      </button>
                     </div>
-                    <div className="absolute bottom-2 left-2 bg-black/60 dark:bg-black/80 text-white text-xs px-2 py-1 rounded backdrop-blur-sm font-medium">
-                      Hal {index + 1}
+
+                    {/* Kontrol Panah (Tampil di Mobile, atau saat hover di PC) */}
+                    <div className="flex bg-slate-100 dark:bg-slate-800 border-t border-slate-200 dark:border-slate-700">
+                      <button
+                        onClick={() => moveImage(index, "left")}
+                        disabled={index === 0}
+                        className="flex-1 py-2 flex justify-center text-slate-600 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-700 disabled:opacity-30 transition-colors"
+                        title="Geser ke Kiri"
+                      >
+                        <ChevronLeft size={18} />
+                      </button>
+                      <div className="w-px bg-slate-200 dark:bg-slate-700"></div>
+                      <button
+                        onClick={() => moveImage(index, "right")}
+                        disabled={index === images.length - 1}
+                        className="flex-1 py-2 flex justify-center text-slate-600 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-700 disabled:opacity-30 transition-colors"
+                        title="Geser ke Kanan"
+                      >
+                        <ChevronRight size={18} />
+                      </button>
                     </div>
-                    <button
-                      onClick={() => deleteImage(index)}
-                      className="absolute top-2 right-2 bg-red-500/90 text-white p-1.5 rounded-full opacity-0 group-hover:opacity-100 transition-opacity hover:bg-red-600 shadow-sm"
-                      title="Hapus gambar ini"
-                    >
-                      <Trash2 size={14} />
-                    </button>
+
                   </div>
                 ))}
               </div>
