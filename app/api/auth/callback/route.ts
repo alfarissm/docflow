@@ -1,11 +1,8 @@
 import { google } from "googleapis";
 import { NextResponse } from "next/server";
 
-export async function GET(req: Request) {
+export async function GET() {
   try {
-    const { searchParams } = new URL(req.url);
-    const code = searchParams.get("code");
-
     const redirectUri =
       process.env.NODE_ENV === "production"
         ? "https://docflow-jade.vercel.app/api/auth/callback"
@@ -17,21 +14,16 @@ export async function GET(req: Request) {
       redirectUri
     );
 
-    if (!code) {
-      return NextResponse.json({ error: "No code received" });
-    }
-
-    const { tokens } = await oauth2Client.getToken(code);
-
-    return NextResponse.json({
-      access_token: tokens.access_token,
-      refresh_token: tokens.refresh_token,
+    const authUrl = oauth2Client.generateAuthUrl({
+      access_type: "offline",
+      prompt: "consent",
+      scope: ["https://www.googleapis.com/auth/drive.file"],
     });
-  } catch (error) {
-    console.error(error);
 
+    return NextResponse.json({ authUrl });
+  } catch {
     return NextResponse.json(
-      { error: "OAuth callback failed" },
+      { error: "Upload init failed" },
       { status: 500 }
     );
   }
