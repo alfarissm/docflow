@@ -6,9 +6,13 @@ export async function POST(req: Request) {
   try {
     const body = await req.json();
 
-    const auth = new google.auth.OAuth2();
+    const auth = new google.auth.OAuth2(
+      process.env.GOOGLE_CLIENT_ID,
+      process.env.GOOGLE_CLIENT_SECRET
+    );
+
     auth.setCredentials({
-      access_token: process.env.GOOGLE_ACCESS_TOKEN,
+      refresh_token: process.env.GOOGLE_REFRESH_TOKEN,
     });
 
     const drive = google.drive({
@@ -33,7 +37,6 @@ export async function POST(req: Request) {
     return NextResponse.json({
       success: true,
       fileId: file.data.id,
-      fileName: body.fileName,
     });
   } catch (error) {
     console.error(error);
