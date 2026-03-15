@@ -1,14 +1,17 @@
 "use client";
 
-import React, { useRef, useState } from "react";
+import React, { useRef, useState, useEffect } from "react";
 import Webcam from "react-webcam";
 import { PDFDocument, rgb, StandardFonts } from "pdf-lib";
-import { Camera, Download, Trash2, CloudUpload, RotateCcw, FileText, Grip } from "lucide-react";
+import { Camera, Download, Trash2, CloudUpload, RotateCcw, FileText, Grip, Sun, Moon } from "lucide-react";
 
 export default function Scanner() {
   const webcamRef = useRef<Webcam>(null);
   const [images, setImages] = useState<string[]>([]);
   const [isProcessing, setIsProcessing] = useState(false);
+  
+  // State untuk Dark Mode
+  const [isDarkMode, setIsDarkMode] = useState(false);
 
   // Drag and Drop Refs
   const dragItem = useRef<number | null>(null);
@@ -42,7 +45,6 @@ export default function Scanner() {
       setImages(_images);
     }
     
-    // Reset refs setelah selesai drag
     dragItem.current = null;
     dragOverItem.current = null;
   };
@@ -92,7 +94,9 @@ export default function Scanner() {
     try {
       setIsProcessing(true);
       const pdfBytes = await buildPDF();
-      const blob = new Blob([pdfBytes], { type: "application/pdf" });
+      const blob = new Blob([new Uint8Array(pdfBytes)], {
+  type: "application/pdf",
+})
       const url = URL.createObjectURL(blob);
       const link = document.createElement("a");
       link.href = url;
@@ -143,121 +147,135 @@ export default function Scanner() {
   };
 
   return (
-    <div className="max-w-4xl mx-auto p-4 md:p-8 flex flex-col gap-8 font-sans text-slate-800">
-      
-      {/* Header */}
-      <div className="text-center space-y-2">
-        <h1 className="text-3xl font-bold flex items-center justify-center gap-2">
-          <FileText className="text-blue-600" /> DocFlow Scanner
-        </h1>
-        <p className="text-slate-500">Pindai dokumen dan simpan langsung ke format PDF.</p>
-      </div>
+    // Wrapper utama yang mengontrol class "dark"
+    <div className={`${isDarkMode ? "dark" : ""}`}>
+      {/* Background UI Utama */}
+      <div className="min-h-screen transition-colors duration-300 bg-white dark:bg-slate-950">
+        <div className="max-w-4xl mx-auto p-4 md:p-8 flex flex-col gap-8 font-sans text-slate-800 dark:text-slate-100 transition-colors duration-300">
+          
+          {/* Header & Theme Toggle */}
+          <div className="relative text-center space-y-2">
+            <h1 className="text-3xl font-bold flex items-center justify-center gap-2">
+              <FileText className="text-blue-600 dark:text-blue-400" /> DocFlow Scanner
+            </h1>
+            <p className="text-slate-500 dark:text-slate-400">Scan Doc and Auto Upload to Your Drive.</p>
+            
+            <button
+              onClick={() => setIsDarkMode(!isDarkMode)}
+              className="absolute right-0 top-0 p-2 rounded-full bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 transition-colors"
+              title={isDarkMode ? "Beralih ke Mode Terang" : "Beralih ke Mode Gelap"}
+            >
+              {isDarkMode ? <Sun size={20} className="text-amber-400" /> : <Moon size={20} className="text-slate-600" />}
+            </button>
+          </div>
 
-      {/* Camera Section */}
-      <div className="relative mx-auto w-full max-w-2xl rounded-2xl overflow-hidden shadow-xl border-4 border-slate-100 bg-black group">
-        <Webcam
-          audio={false}
-          ref={webcamRef}
-          screenshotFormat="image/jpeg"
-          className="w-full h-auto object-cover opacity-95 transition-opacity duration-300 group-hover:opacity-100"
-        />
-        
-        {/* Shutter Button */}
-        <div className="absolute bottom-6 left-0 right-0 flex justify-center">
-          <button
-            onClick={capture}
-            className="flex items-center justify-center w-16 h-16 bg-white rounded-full shadow-lg border-4 border-slate-200 hover:bg-slate-100 hover:scale-105 active:scale-95 transition-all"
-            title="Ambil Gambar"
-          >
-            <Camera className="text-slate-800" size={28} />
-          </button>
-        </div>
-      </div>
-
-      {/* Action Controls & Gallery */}
-      {images.length > 0 && (
-        <div className="space-y-6">
-          {/* Toolbar */}
-          <div className="flex flex-col md:flex-row items-center justify-between bg-white p-4 rounded-xl shadow-sm border border-slate-200 gap-4">
-            <div className="flex items-center gap-2 text-slate-600 font-medium">
-              <span className="bg-blue-100 text-blue-700 py-1 px-3 rounded-full text-sm">
-                {images.length} Halaman
-              </span>
-              siap diproses
-            </div>
-
-            <div className="flex flex-wrap items-center justify-center gap-3">
+          {/* Camera Section */}
+          <div className="relative mx-auto w-full max-w-2xl rounded-2xl overflow-hidden shadow-xl border-4 border-slate-100 dark:border-slate-800 bg-black group transition-colors duration-300">
+            <Webcam
+              audio={false}
+              ref={webcamRef}
+              screenshotFormat="image/jpeg"
+              className="w-full h-auto object-cover opacity-95 transition-opacity duration-300 group-hover:opacity-100"
+            />
+            
+            {/* Shutter Button */}
+            <div className="absolute bottom-6 left-0 right-0 flex justify-center">
               <button
-                onClick={resetImages}
-                disabled={isProcessing}
-                className="flex items-center gap-2 text-red-600 bg-red-50 hover:bg-red-100 px-4 py-2 rounded-lg transition-colors text-sm font-medium disabled:opacity-50"
+                onClick={capture}
+                className="flex items-center justify-center w-16 h-16 bg-white dark:bg-slate-200 rounded-full shadow-lg border-4 border-slate-200 dark:border-slate-400 hover:scale-105 active:scale-95 transition-all"
+                title="Ambil Gambar"
               >
-                <RotateCcw size={16} /> Reset
-              </button>
-
-              <button
-                onClick={generatePDF}
-                disabled={isProcessing}
-                className="flex items-center gap-2 bg-slate-800 text-white hover:bg-slate-700 px-4 py-2 rounded-lg transition-colors text-sm font-medium shadow-sm disabled:opacity-50"
-              >
-                <Download size={16} /> {isProcessing ? "Memproses..." : "Download PDF"}
-              </button>
-
-              <button
-                onClick={sendPDFToDrive}
-                disabled={isProcessing}
-                className="flex items-center gap-2 bg-blue-600 text-white hover:bg-blue-700 px-4 py-2 rounded-lg transition-colors text-sm font-medium shadow-sm disabled:opacity-50"
-              >
-                <CloudUpload size={16} /> {isProcessing ? "Uploading..." : "Save to Drive"}
+                <Camera className="text-slate-800" size={28} />
               </button>
             </div>
           </div>
 
-          <p className="text-xs text-slate-400 text-center -mb-2">
-            💡 Tips: Seret dan lepas (drag & drop) gambar untuk mengubah urutan halaman.
-          </p>
-
-          {/* Image Grid with Drag and Drop */}
-          <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-4">
-            {images.map((img, index) => (
-              <div
-                key={index}
-                draggable
-                onDragStart={() => (dragItem.current = index)}
-                onDragEnter={() => (dragOverItem.current = index)}
-                onDragEnd={handleSort}
-                onDragOver={(e) => e.preventDefault()}
-                className="relative group rounded-xl overflow-hidden shadow-sm border border-slate-200 aspect-[3/4] bg-slate-50 cursor-grab active:cursor-grabbing hover:border-blue-400 transition-colors"
-              >
-                <img
-                  src={img}
-                  alt={`Halaman ${index + 1}`}
-                  className="w-full h-full object-cover pointer-events-none"
-                />
-                
-                {/* Drag Indicator (Icon) */}
-                <div className="absolute top-2 left-2 bg-black/40 text-white p-1 rounded opacity-0 group-hover:opacity-100 transition-opacity backdrop-blur-sm">
-                  <Grip size={14} />
-                </div>
-                
-                {/* Page Number Badge */}
-                <div className="absolute bottom-2 left-2 bg-black/60 text-white text-xs px-2 py-1 rounded backdrop-blur-sm font-medium">
-                  Hal {index + 1}
+          {/* Action Controls & Gallery */}
+          {images.length > 0 && (
+            <div className="space-y-6">
+              {/* Toolbar */}
+              <div className="flex flex-col md:flex-row items-center justify-between bg-white dark:bg-slate-900 p-4 rounded-xl shadow-sm border border-slate-200 dark:border-slate-800 gap-4 transition-colors duration-300">
+                <div className="flex items-center gap-2 text-slate-600 dark:text-slate-300 font-medium">
+                  <span className="bg-blue-100 dark:bg-blue-900/40 text-blue-700 dark:text-blue-400 py-1 px-3 rounded-full text-sm transition-colors">
+                    {images.length} Halaman
+                  </span>
+                  siap diproses
                 </div>
 
-                {/* Delete Button (Appears on Hover) */}
-                <button
-                  onClick={() => deleteImage(index)}
-                  className="absolute top-2 right-2 bg-red-500/90 text-white p-1.5 rounded-full opacity-0 group-hover:opacity-100 transition-opacity hover:bg-red-600 shadow-sm"
-                  title="Hapus gambar ini"
-                >
-                  <Trash2 size={14} />
-                </button>
+                <div className="flex flex-wrap items-center justify-center gap-3">
+                  <button
+                    onClick={resetImages}
+                    disabled={isProcessing}
+                    className="flex items-center gap-2 text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-900/20 hover:bg-red-100 dark:hover:bg-red-900/40 px-4 py-2 rounded-lg transition-colors text-sm font-medium disabled:opacity-50"
+                  >
+                    <RotateCcw size={16} /> Reset
+                  </button>
+
+                  <button
+                    onClick={generatePDF}
+                    disabled={isProcessing}
+                    className="flex items-center gap-2 bg-slate-800 dark:bg-slate-700 text-white hover:bg-slate-700 dark:hover:bg-slate-600 px-4 py-2 rounded-lg transition-colors text-sm font-medium shadow-sm disabled:opacity-50"
+                  >
+                    <Download size={16} /> {isProcessing ? "Memproses..." : "Download PDF"}
+                  </button>
+
+                  <button
+                    onClick={sendPDFToDrive}
+                    disabled={isProcessing}
+                    className="flex items-center gap-2 bg-blue-600 dark:bg-blue-500 text-white hover:bg-blue-700 dark:hover:bg-blue-600 px-4 py-2 rounded-lg transition-colors text-sm font-medium shadow-sm disabled:opacity-50"
+                  >
+                    <CloudUpload size={16} /> {isProcessing ? "Uploading..." : "Save to Drive"}
+                  </button>
+                </div>
               </div>
-            ))}
-          </div>
+
+              <p className="text-xs text-slate-400 dark:text-slate-500 text-center -mb-2">
+                💡 Tips: Seret dan lepas (drag & drop) gambar untuk mengubah urutan halaman.
+              </p>
+
+              {/* Image Grid with Drag and Drop */}
+              <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-4">
+                {images.map((img, index) => (
+                  <div
+                    key={index}
+                    draggable
+                    onDragStart={() => (dragItem.current = index)}
+                    onDragEnter={() => (dragOverItem.current = index)}
+                    onDragEnd={handleSort}
+                    onDragOver={(e) => e.preventDefault()}
+                    className="relative group rounded-xl overflow-hidden shadow-sm border border-slate-200 dark:border-slate-700 aspect-[3/4] bg-slate-50 dark:bg-slate-800 cursor-grab active:cursor-grabbing hover:border-blue-400 dark:hover:border-blue-500 transition-colors"
+                  >
+                    <img
+                      src={img}
+                      alt={`Halaman ${index + 1}`}
+                      className="w-full h-full object-cover pointer-events-none opacity-90 dark:opacity-80 group-hover:opacity-100 transition-opacity"
+                    />
+                    
+                    {/* Drag Indicator (Icon) */}
+                    <div className="absolute top-2 left-2 bg-black/40 text-white p-1 rounded opacity-0 group-hover:opacity-100 transition-opacity backdrop-blur-sm">
+                      <Grip size={14} />
+                    </div>
+                    
+                    {/* Page Number Badge */}
+                    <div className="absolute bottom-2 left-2 bg-black/60 dark:bg-black/80 text-white text-xs px-2 py-1 rounded backdrop-blur-sm font-medium">
+                      Hal {index + 1}
+                    </div>
+
+                    {/* Delete Button (Appears on Hover) */}
+                    <button
+                      onClick={() => deleteImage(index)}
+                      className="absolute top-2 right-2 bg-red-500/90 text-white p-1.5 rounded-full opacity-0 group-hover:opacity-100 transition-opacity hover:bg-red-600 shadow-sm"
+                      title="Hapus gambar ini"
+                    >
+                      <Trash2 size={14} />
+                    </button>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
         </div>
-      )}
+      </div>
     </div>
   );
 }
