@@ -348,10 +348,10 @@ export default function Scanner() {
 
       const watermarkWord = "CAEGR\u00AE";
       const watermarkLine = Array.from({ length: 42 }, () => watermarkWord).join("   ");
-      const fontSize = 8;
+      const fontSize = 6.5;
       const lineHeight = 13;
       const color = rgb(0.46, 0.46, 0.46);
-      const opacity = 0.14;
+      const opacity = 0.12;
 
       for (let y = -jpgImage.height; y < jpgImage.height * 2; y += lineHeight) {
         const isEvenRow = Math.floor((y + jpgImage.height) / lineHeight) % 2 === 0;
