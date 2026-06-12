@@ -4,6 +4,8 @@ A web-based document scanner built with Next.js. Capture documents with your dev
 
 Live demo: [docflow-jade.vercel.app](https://docflow-jade.vercel.app)
 
+![DocFlow Scanner preview](docs/preview.png)
+
 ## Features
 
 - **Camera capture** — front/back camera switching via `react-webcam`.
