@@ -64,18 +64,9 @@ Open [http://localhost:3000](http://localhost:3000). Camera access requires `htt
 
 ## Google Drive Setup
 
-The app uses a server-side OAuth2 refresh token to upload on behalf of a single Drive account.
+The "Save to Drive" feature uploads through a server-side Google OAuth2 flow. To enable it you'll need a Google Cloud project with the **Drive API** enabled, OAuth credentials, and the `GOOGLE_*` environment variables set. The app uses the `drive.file` scope, so it can only access files it creates.
 
-1. In [Google Cloud Console](https://console.cloud.google.com), create OAuth credentials (Web application) and enable the **Google Drive API**.
-2. Add the redirect URI:
-   - Dev: `http://localhost:3000/api/auth/callback`
-   - Prod: `https://<your-domain>/api/auth/callback`
-3. Set `GOOGLE_CLIENT_ID` and `GOOGLE_CLIENT_SECRET` in `.env.local`.
-4. Get the consent URL — `GET /api/upload` returns `{ authUrl }`. Open it, grant access.
-5. Google redirects to `/api/auth/callback`, which returns `{ access_token, refresh_token }`. Copy the `refresh_token` into `GOOGLE_REFRESH_TOKEN`.
-6. Uploaded files use the `drive.file` scope (the app only sees files it creates).
-
-> Note: the redirect URIs are currently hardcoded to `docflow-jade.vercel.app` for production in `app/api/upload/route.ts` and `app/api/auth/callback/route.ts`. Update them to your own domain when self-hosting.
+> Drive upload is optional. Capture, perspective correction, filter, and PDF download all work without any Google setup.
 
 ## How It Works
 
